@@ -22,47 +22,6 @@ Stop leaking your AWS keys in a rush to debug.
 
 **Gimtex** is the bridge between your local codebase and your AI assistant. It converts your project into a highly optimized, clean, and safe context payload in milliseconds.
 
-## Key Features
-
-- **Context Mapping**: Automatically generates a visual **Directory Tree** and identifies your **Tech Stack** (Node, Rust, etc.) before the code content.
-- **Tokenomics**: Built-in `cl100k_base` token counter. Know exactly how big your prompt is with a "Traffic Light" dashboard (Green/Yellow/Red).
-- **Security Sentinel**: **Active Defense Protocols** redact sensitive information (API Keys, AWS Secrets) on the fly.
-- **Git Intelligence**: Use `--diff` to extract *only* what you've changed. Perfect for "Fix this bug" prompts.
-- **Precision Indexing**: Add line numbers (`-n`) to your output for accurate, reference-based debugging.
-- **Clipboard Ops**: Use `-c` to pipe output directly to your system clipboard.
-- **Polyglot Protocols**: Supports **Markdown** (standard) and **XML** (Claude-optimized) formats.
-
-## Installation
-
-To install `gimtex` globally on your machine:
-
-```bash
-git clone https://github.com/your-username/gimtex.git
-cd gimtex
-cargo install --path .
-```
-
-*Verification:*
-```bash
-gimtex --version
-# gimtex 1.0.0
-```
-
-## Usage
-
-```bash
-gimtex [OPTIONS] [PATH]
-```
-
-| Flag | Short | Description |
-| :--- | :--- | :--- |
-| `--help` | `-h` | Print help information. |
-| `--copy` | `-c` | Copy output to clipboard. |
-| `--diff` | `-d` | Scan only files changed/staged in Git. |
-| `--numbers`| `-n` | Add line numbers for debugging. |
-| `--filter` | `-i` | Filter files by glob pattern (e.g., `"*.rs"`). |
-| `--format` | `-f` | Output format (`markdown` or `xml`). |
-
 ### Scenarios
 
 #### 1. The Standard Run

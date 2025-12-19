@@ -227,6 +227,34 @@ pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
     // Determinism: Sort files alphabetically
     final_files.sort();
 
+    // INTERACTIVE MODE
+    let mut selected_files = final_files.clone();
+    if config.interactive {
+        use dialoguer::{MultiSelect, theme::ColorfulTheme};
+        
+        let file_strings: Vec<String> = final_files.iter().map(|p| p.display().to_string()).collect();
+        
+        // Show selection menu
+        if !file_strings.is_empty() {
+             let selection = MultiSelect::with_theme(&ColorfulTheme::default())
+                .with_prompt("Select files to include (Space to toggle, Enter to confirm)")
+                .items(&file_strings)
+                .defaults(&vec![true; file_strings.len()]) 
+                .interact()
+                .context("Failed to run interactive selection")?;
+            
+            selected_files = selection.iter().map(|&i| final_files[i].clone()).collect();
+            
+            if selected_files.is_empty() {
+                eprintln!("{} No files selected. Exiting.", "[!]".yellow().bold());
+                return Ok(());
+            }
+        }
+    }
+    
+    // Use selected_files for processing
+    let final_files = selected_files;
+
     // Context Mapping sequence
     
     // 1. Recon Module (Project Context)
@@ -246,12 +274,12 @@ pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
     // PARALLEL PROCESSING
     // We Map files to their processed string output, then collect them IN ORDER.
     // rayon's `par_iter` combined with `map` and `collect` preserves order if used correctly,
-    // but `collect::<Vec<_>>` definitely preserves it relative to the input iterator.
+    // but `collect::<Vec<_>>` definitely preserves it relative    // PARALLEL PROCESSING
     use rayon::prelude::*;
     
     let processed_results: Vec<Option<(String, usize)>> = final_files
         .par_iter()
-        .map(|path| process_file(path, &bpe, &scanner, config.numbers))
+        .map(|path| process_file(path, &bpe, &scanner, config.numbers, config.max_size))
         .collect();
 
     // We use zip to iterate matching files and results.
@@ -387,28 +415,31 @@ fn get_walk_files(path: &str) -> Vec<PathBuf> {
     files
 }
 
-fn process_file(path: &Path, bpe: &tiktoken_rs::CoreBPE, scanner: &SecretScanner, show_numbers: bool) -> Option<(String, usize)> {
-    // Binary check
-     let mut file = match File::open(path) {
-        Ok(f) => f,
+fn process_file(path: &Path, bpe: &tiktoken_rs::CoreBPE, scanner: &SecretScanner, show_numbers: bool, max_size: u64) -> Option<(String, usize)> {
+    // Size Safety Protocol
+    if let Ok(metadata) = std::fs::metadata(path) {
+        if metadata.len() > max_size {
+            eprintln!("{} Skipping large file: {} ({})", "[!]".yellow().bold(), path.display(), format!("> {} B", max_size).white().dimmed());
+            return None;
+        }
+    }
+
+    let raw_bytes = match std::fs::read(path) {
+        Ok(bytes) => bytes,
         Err(e) => {
             eprintln!("{} Skipping {}: {}", "[!]".yellow().bold(), path.display(), e);
             return None;
         }
     };
 
-    let mut buffer = [0; 1024];
-    let n = match file.read(&mut buffer) {
-        Ok(n) => n,
-        Err(_) => return None,
-    };
-
-    if buffer[..n].contains(&0) {
+    // Binary Check
+    // We check the first 1024 bytes (or less) for null bytes
+    if raw_bytes.iter().take(1024).any(|&b| b == 0) {
         eprintln!("{} Skipping binary file: {}", "[!]".yellow().bold(), path.display());
         return None;
     }
 
-    let mut content = std::fs::read_to_string(path).ok()?;
+    let mut content = String::from_utf8_lossy(&raw_bytes).to_string();
     
     // Security Scan
     content = scanner.scan(&content, path);

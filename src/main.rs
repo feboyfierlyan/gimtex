@@ -15,14 +15,15 @@ const BANNER: &str = r#"
  \____|___|_|  |_| |_| |_____/_/\_\
 "#;
 
-const TAGLINE: &str = ">> GIMTEX v2.2 :: Git-Integrated Module for Text EXtraction";
+const TAGLINE: &str = ">> GIMTEX v2.6 :: Git-Integrated Module for Text EXtraction";
 
 const EXAMPLES: &str = "
 EXAMPLES:
-  gimtex .                    # Dump current dir to stdout
-  gimtex -c                   # Dump & copy to clipboard (Silent Mode)
-  gimtex src/ -i \"*.rs\"       # Dump only Rust files in src/
-  gimtex --diff --xml         # Dump git changes in XML format (Claude optimized)
+  gimtex .                          # Scan current dir
+  gimtex -c                         # Copy to clipboard
+  gimtex src/ -I -o content.md      # Interactive Mode + Save to file
+  gimtex https://github.com/user/repo -I  # Scan remote repo interactively
+  gimtex --max-size 500000          # Increase size limit to 500KB
 ";
 
 #[derive(Parser, Debug)]
@@ -55,6 +56,14 @@ pub struct Args {
     /// Output to file instead of stdout
     #[arg(short = 'o', long)]
     output: Option<String>,
+
+    /// Maximum file size in bytes to process (default: 100KB)
+    #[arg(long, default_value_t = 100_000)]
+    max_size: u64,
+
+    /// Interactive mode: Select files manually
+    #[arg(short = 'I', long)]
+    interactive: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -87,8 +96,8 @@ fn main() -> Result<()> {
     let mut args = Args::from_arg_matches(&matches)?;
 
     // Logic hook
-    // Safety: If no path is provided AND --diff is not set, we default to printing help
-    if args.path.is_none() && !args.diff {
+    // Safety: If no path is provided AND --diff is not set AND --interactive is not set, we default to printing help
+    if args.path.is_none() && !args.diff && !args.interactive {
         let mut cmd = Args::command()
             .before_help(format!("{}\n{}", BANNER.cyan().bold(), TAGLINE.white().italic()))
             .after_help(examples_colored.to_string());
@@ -109,8 +118,52 @@ fn main() -> Result<()> {
         }
     }
 
-    let target_path = args.path.as_deref().unwrap_or(".");
-    scanner::scan(target_path, &args)?;
+    let mut target_path_buf = std::path::PathBuf::from(args.path.as_deref().unwrap_or("."));
+
+    // REMOTE SCOUT PROTOCOL
+    let target_str = args.path.as_deref().unwrap_or(".");
+    let temp_dir; // Keep alive scope
+
+    if target_str.starts_with("http") || target_str.starts_with("git@") {
+        use std::process::Command;
+        use indicatif::{ProgressBar, ProgressStyle};
+
+        let spinner = ProgressBar::new_spinner();
+        spinner.set_style(ProgressStyle::default_spinner()
+            .template("{spinner:.green} {msg}")
+            .unwrap());
+        spinner.set_message(format!("Locating Remote Target: {}", target_str));
+        spinner.enable_steady_tick(std::time::Duration::from_millis(100));
+
+        // Create Temp Dir
+        temp_dir = tempfile::Builder::new()
+            .prefix("gimtex_remote")
+            .tempdir()
+            .context("Failed to create temporary bunker")?;
+        
+        spinner.set_message("Cloning Data Stream...");
+
+        // Git Clone
+        let status = Command::new("git")
+            .arg("clone")
+            .arg("--depth")
+            .arg("1") // Shallow clone for speed
+            .arg(target_str)
+            .arg(temp_dir.path())
+            .output()
+            .context("Failed to execute git clone")?;
+
+        if !status.status.success() {
+            spinner.finish_with_message(format!("{} Connection Failed", "[X]".red()));
+            eprintln!("{}", String::from_utf8_lossy(&status.stderr));
+            return Ok(());
+        }
+
+        spinner.finish_with_message(format!("{} Target Acquired", "[OK]".green()));
+        target_path_buf = temp_dir.path().to_path_buf();
+    }
+
+    scanner::scan(target_path_buf.to_str().unwrap(), &args)?;
 
     Ok(())
 }

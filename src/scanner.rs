@@ -119,41 +119,67 @@ fn generate_tree_view(files: &[PathBuf], root: &str) -> String {
     )
 }
 
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct CargoToml {
+    package: Option<CargoPackage>,
+    dependencies: Option<toml::Table>,
+}
+
+#[derive(Deserialize)]
+struct CargoPackage {
+    name: String,
+}
+
+#[derive(Deserialize)]
+struct PackageJson {
+    name: Option<String>,
+    dependencies: Option<serde_json::Map<String, serde_json::Value>>,
+}
+
 fn scan_dependencies(root: &str) -> Option<String> {
     let root_path = Path::new(root);
     let mut summary = String::new();
 
-    // Strategy: Check high-value manifests
-    // Rust
-    if root_path.join("Cargo.toml").exists() {
-        summary.push_str(&format!("{} Detected Framework: Rust (Cargo.toml)\n", "[+]".green()));
-        if let Ok(content) = std::fs::read_to_string(root_path.join("Cargo.toml")) {
-            // Simple parsing for [dependencies]
-            let lines: Vec<&str> = content.lines().collect();
-            let mut capture = false;
-            let mut count = 0;
-            summary.push_str(&format!("{} Key Dependencies:\n", "[+]".green()));
-            for line in lines {
-                if line.trim().starts_with("[dependencies]") {
-                    capture = true;
-                    continue;
-                }
-                if capture {
-                    if line.trim().starts_with("[") { break; } // Next section
-                    if !line.trim().is_empty() && count < 10 {
-                        summary.push_str(&format!("    - {}\n", line.trim()));
-                        count += 1;
-                    }
+    // Strategy: robust parsing
+    
+    // Rust (Cargo.toml)
+    if let Ok(content) = std::fs::read_to_string(root_path.join("Cargo.toml")) {
+        if let Ok(cargo) = toml::from_str::<CargoToml>(&content) {
+            let name = cargo.package.map(|p| p.name).unwrap_or("Unknown".to_string());
+            summary.push_str(&format!("{} Project: {} (Rust)\n", "[+]".green(), name.bold()));
+            
+            if let Some(deps) = cargo.dependencies {
+                summary.push_str(&format!("{} Dependencies:\n", "[+]".green()));
+                // Limit to first 15 for brevity
+                for (k, v) in deps.iter().take(15) {
+                    // toml values can be complex (inline tables), we just want the version usually
+                    let version = match v {
+                        toml::Value::String(s) => s.clone(),
+                        toml::Value::Table(t) => t.get("version").and_then(|v| v.as_str()).unwrap_or("*").to_string(),
+                        _ => "*".to_string(),
+                    };
+                    summary.push_str(&format!("    - {}: {}\n", k, version.dimmed()));
                 }
             }
         }
     }
     
-    // Node.js
-    if root_path.join("package.json").exists() {
-        summary.push_str(&format!("{} Detected Framework: Node.js (package.json)\n", "[+]".green()));
-        // Could use regex or basic string search for "dependencies" block
-        // keeping it simple for now as requested
+    // Node.js (package.json)
+    if let Ok(content) = std::fs::read_to_string(root_path.join("package.json")) {
+        if let Ok(pkg) = serde_json::from_str::<PackageJson>(&content) {
+             let name = pkg.name.unwrap_or("Unknown".to_string());
+             summary.push_str(&format!("{} Project: {} (Node.js)\n", "[+]".green(), name.bold()));
+             
+             if let Some(deps) = pkg.dependencies {
+                summary.push_str(&format!("{} Dependencies:\n", "[+]".green()));
+                for (k, v) in deps.iter().take(15) {
+                    let version = v.as_str().unwrap_or("*");
+                    summary.push_str(&format!("    - {}: {}\n", k, version.dimmed()));
+                }
+             }
+        }
     }
 
     if summary.is_empty() {

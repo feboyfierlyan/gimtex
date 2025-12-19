@@ -1,0 +1,392 @@
+use anyhow::{Result, Context};
+use arboard::Clipboard;
+use ignore::WalkBuilder;
+use std::fs::File;
+use std::io::Read;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use tiktoken_rs::cl100k_base;
+use glob::Pattern;
+use colored::*;
+use regex::Regex;
+use std::collections::BTreeMap;
+
+struct SecretScanner {
+    generic_keys: Regex,
+    openai_keys: Regex,
+    aws_keys: Regex,
+}
+
+impl SecretScanner {
+    fn new() -> Result<Self> {
+        Ok(Self {
+            generic_keys: Regex::new(r#"(?i)(api_?key|auth_?token|access_?key|secret|password)[\s]*[:=][\s]*['"](?P<secret>[a-zA-Z0-9_\-]{8,})['"]"#)?,
+            openai_keys: Regex::new(r#"sk-[a-zA-Z0-9]{20,}T3BlbkFJ"#)?,
+            aws_keys: Regex::new(r#"AKIA[0-9A-Z]{16}"#)?,
+        })
+    }
+
+    fn scan(&self, content: &str, file_path: &Path) -> String {
+        let mut sanitized = content.to_string();
+        let mut found_secret = false;
+
+        // Generic Keys
+        if self.generic_keys.is_match(&sanitized) {
+            sanitized = self.generic_keys.replace_all(&sanitized, |caps: &regex::Captures| {
+                found_secret = true;
+                let whole = caps.get(0).unwrap().as_str();
+                let secret = caps.name("secret").unwrap().as_str();
+                whole.replace(secret, &"[REDACTED_SECRET]".red().bold().to_string())
+            }).to_string();
+        }
+
+        // OpenAI Keys
+        if self.openai_keys.is_match(&sanitized) {
+             found_secret = true;
+             sanitized = self.openai_keys.replace_all(&sanitized, "[REDACTED_OPENAI_KEY]".red().bold().to_string().as_str()).to_string();
+        }
+
+        // AWS Keys
+        if self.aws_keys.is_match(&sanitized) {
+             found_secret = true;
+             sanitized = self.aws_keys.replace_all(&sanitized, "[REDACTED_AWS_KEY]".red().bold().to_string().as_str()).to_string();
+        }
+
+        if found_secret {
+            eprintln!("{} SECURITY ALERT: Potential secret found in file: {}", "[!]".red().bold(), file_path.display());
+        }
+
+        sanitized
+    }
+}
+
+// Tree View Structures
+struct TreeNode {
+    children: BTreeMap<String, TreeNode>,
+}
+
+impl TreeNode {
+    fn new() -> Self {
+        Self { children: BTreeMap::new() }
+    }
+
+    fn insert(&mut self, path: &Path, _is_dir: bool) { 
+        let components: Vec<_> = path.iter().collect();
+        if components.is_empty() { return; }
+
+        let mut current = self;
+        for component in components {
+            let name = component.to_string_lossy().to_string();
+            current = current.children.entry(name).or_insert_with(TreeNode::new);
+        }
+    }
+
+    fn render(&self, prefix: &str, _is_root: bool) -> String {
+        let mut output = String::new();
+        let count = self.children.len();
+        for (i, (name, node)) in self.children.iter().enumerate() {
+            let is_last = i == count - 1;
+            let connector = if is_last { "└── " } else { "├── " };
+            let child_prefix = if is_last { "    " } else { "│   " };
+            
+            // Visualization Logic: 
+            let display_name = if node.children.is_empty() {
+                name.white().to_string()
+            } else {
+                name.cyan().bold().to_string()
+            };
+
+            output.push_str(&format!("{}{}{}\n", prefix, connector, display_name));
+            output.push_str(&node.render(&format!("{}{}", prefix, child_prefix), false));
+        }
+        output
+    }
+}
+
+fn generate_tree_view(files: &[PathBuf], root: &str) -> String {
+    let mut tree_root = TreeNode::new();
+    let root_path = Path::new(root);
+
+    for path in files {
+        // Strip prefix to get relative path for the tree
+        let relative_path = path.strip_prefix(root_path).unwrap_or(path);
+        tree_root.insert(relative_path, false);
+    }
+
+    format!("{}\n{}", 
+        root.cyan().bold(), // Root directory name
+        tree_root.render("", true)
+    )
+}
+
+fn scan_dependencies(root: &str) -> Option<String> {
+    let root_path = Path::new(root);
+    let mut summary = String::new();
+
+    // Strategy: Check high-value manifests
+    // Rust
+    if root_path.join("Cargo.toml").exists() {
+        summary.push_str(&format!("{} Detected Framework: Rust (Cargo.toml)\n", "[+]".green()));
+        if let Ok(content) = std::fs::read_to_string(root_path.join("Cargo.toml")) {
+            // Simple parsing for [dependencies]
+            let lines: Vec<&str> = content.lines().collect();
+            let mut capture = false;
+            let mut count = 0;
+            summary.push_str(&format!("{} Key Dependencies:\n", "[+]".green()));
+            for line in lines {
+                if line.trim().starts_with("[dependencies]") {
+                    capture = true;
+                    continue;
+                }
+                if capture {
+                    if line.trim().starts_with("[") { break; } // Next section
+                    if !line.trim().is_empty() && count < 10 {
+                        summary.push_str(&format!("    - {}\n", line.trim()));
+                        count += 1;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Node.js
+    if root_path.join("package.json").exists() {
+        summary.push_str(&format!("{} Detected Framework: Node.js (package.json)\n", "[+]".green()));
+        // Could use regex or basic string search for "dependencies" block
+        // keeping it simple for now as requested
+    }
+
+    if summary.is_empty() {
+        None
+    } else {
+        Some(format!("PROJECT CONTEXT:\n================\n{}\n", summary))
+    }
+}
+
+pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
+    eprintln!("{} Scanning target: {}", "[>>]".cyan().bold(), path.cyan());
+
+    let bpe = cl100k_base()?;
+    let scanner = SecretScanner::new()?;
+    let mut output = String::new();
+    
+    // Strategy Selection
+    let raw_files: Vec<PathBuf> = if config.diff {
+        eprintln!("{} Git Intelligence Mode: Active", "[>>]".cyan().bold());
+        get_git_files(path)?
+    } else {
+        get_walk_files(path)
+    };
+
+    // Filter Compilation
+    let filter_pattern = match &config.filter {
+        Some(p) => {
+            eprintln!("{} Precision Filtering: {}", "[>>]".cyan().bold(), p.yellow());
+            Some(Pattern::new(p).context("Invalid glob pattern")?)
+        },
+        None => None,
+    };
+
+    // Apply Filter & Collect final list for Tree + Processing
+    let mut final_files = Vec::new();
+    for p in raw_files {
+        if let Some(ref pattern) = filter_pattern {
+            if !pattern.matches_path(&p) {
+                continue;
+            }
+        }
+        final_files.push(p);
+    }
+
+    // Context Mapping sequence
+    
+    // 1. Recon Module (Project Context)
+    if let Some(context_header) = scan_dependencies(path) {
+        output.push_str(&context_header);
+        output.push_str("\n");
+    }
+
+    // 2. Tree View
+    let tree_view = generate_tree_view(&final_files, path);
+    output.push_str("PROJECT STRUCTURE:\n==================\n");
+    output.push_str(&tree_view);
+    output.push_str("\n\nFILE CONTENTS:\n==================\n\n");
+
+    let mut file_count = 0;
+
+    for path in final_files {
+        // Apply processing (read, binary check, *sanitize*, parse tokens, format)
+        if let Some((text, count)) = process_file(&path, &bpe, &scanner, config.numbers) {
+            file_count += 1;
+            
+            match config.format.as_str() {
+                 "xml" => {
+                    output.push_str(&format!("<file path=\"{}\" tokens=\"{}\">\n", path.display(), count));
+                    output.push_str(&text);
+                    output.push_str("\n</file>\n");
+                }
+                _ => { // markdown default
+                    // Visual Anchor: --- (Gray) File: path (Bold Yellow) --- (Gray)
+                    let header = format!("{} File: {} ({}) {}", 
+                        "---".truecolor(100, 100, 100), 
+                        path.display().to_string().yellow().bold(), 
+                        format!("{} tokens", count).white().dimmed(),
+                        "---".truecolor(100, 100, 100)
+                    );
+                    output.push_str(&header);
+                    output.push_str("\n");
+                    output.push_str(&text);
+                    output.push_str("\n\n");
+                }
+            }
+        }
+    }
+    
+    // Tokenomics
+    let final_token_count = bpe.encode_with_special_tokens(&output).len();
+
+    // Output
+    if config.copy {
+        match Clipboard::new() {
+            Ok(mut clipboard) => {
+                if let Err(e) = clipboard.set_text(&output) {
+                    eprintln!("{} Clipboard failure: {}", "[X]".red().bold(), e);
+                } else {
+                    eprintln!("{} Payload generated: {} files, {} chars copied.", 
+                        "[OK]".green().bold(), 
+                        file_count, 
+                        output.len()
+                    );
+                }
+            },
+            Err(e) => eprintln!("{} Clipboard init failure: {}", "[X]".red().bold(), e),
+        }
+    } else {
+        println!("{}", output);
+    }
+    
+    // Dashboard
+    print_dashboard(final_token_count, output.len());
+    
+    Ok(())
+}
+
+fn print_dashboard(tokens: usize, chars: usize) {
+    let token_fmt = tokens.to_string();
+    let char_fmt = chars.to_string();
+    
+    let token_color = if tokens < 30_000 {
+        token_fmt.green().bold()
+    } else if tokens < 100_000 {
+        token_fmt.yellow().bold()
+    } else {
+        token_fmt.red().bold()
+    };
+
+    eprintln!("{} Payload Metrics: {} tokens | {} chars", 
+        "[i]".cyan().bold(), 
+        token_color, 
+        char_fmt.white().bold()
+    );
+}
+
+fn get_git_files(_path: &str) -> Result<Vec<PathBuf>> {
+    let output = Command::new("git")
+        .args(["diff", "--name-only", "HEAD"])
+        .output()
+        .context("Failed to execute git")?;
+        
+    if !output.status.success() {
+        eprintln!("{} Git command failed", "[X]".red().bold());
+        anyhow::bail!("Git command failed");
+    }
+    
+    let content = String::from_utf8(output.stdout)?;
+    let mut files = Vec::new();
+    for line in content.lines() {
+        let p = PathBuf::from(line);
+        if p.exists() && p.is_file() {
+            files.push(p);
+        }
+    }
+    Ok(files)
+}
+
+fn get_walk_files(path: &str) -> Vec<PathBuf> {
+    let mut files = Vec::new();
+    let walker = WalkBuilder::new(path).build();
+    for result in walker {
+        match result {
+            Ok(entry) => {
+                if entry.path().is_file() {
+                    files.push(entry.path().to_path_buf());
+                }
+            }
+            Err(err) => {
+                 eprintln!("{} Access Denied: {}", "[X]".red().bold(), err);
+            }
+        }
+    }
+    files
+}
+
+fn process_file(path: &Path, bpe: &tiktoken_rs::CoreBPE, scanner: &SecretScanner, show_numbers: bool) -> Option<(String, usize)> {
+    // Binary check
+     let mut file = match File::open(path) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("{} Skipping {}: {}", "[!]".yellow().bold(), path.display(), e);
+            return None;
+        }
+    };
+
+    let mut buffer = [0; 1024];
+    let n = match file.read(&mut buffer) {
+        Ok(n) => n,
+        Err(_) => return None,
+    };
+
+    if buffer[..n].contains(&0) {
+        eprintln!("{} Skipping binary file: {}", "[!]".yellow().bold(), path.display());
+        return None;
+    }
+
+    let mut content = std::fs::read_to_string(path).ok()?;
+    
+    // Security Scan
+    content = scanner.scan(&content, path);
+
+    // Line Indexing (Optional)
+    if show_numbers {
+        let mut indexed_content = String::new();
+        for (i, line) in content.lines().enumerate() {
+            let line_num = format!("{:>4} |", i + 1);
+            // We use standard colors explicitly or use colored crate but strip it for payload?
+            // The user asked for "Visual Polish" in the output. 
+            // If the user wants to copy to clipboard, colored codes might be annoying if pasting into an editor that doesn't support them.
+            // However, the prompt says "Visual Polish" using `colored` crate.
+            // Generally for LLM context, plain text is better.
+            // But let's follow instruction: "make the line number... a distinct color... using the colored crate"
+            // Wait, if it's for LLM context, ANSI codes are garbage.
+            // BUT, the tool is a CLI for "Text EXtraction".
+            // The `SecretScanner` effectively modifies the content.
+            // Let's assume the user wants it visually in the terminal.
+            // If `copy` is used, we might want to strip colors or keep them?
+            // The `colored` crate normally respects NO_COLOR or non-tty, but if we format! it into a string, it bakes them in.
+            // The redactor puts `[REDACTED]`.red().
+            // If I bake ANSI codes into the payload, the LLM will see them.
+            // Most LLMs can handle or ignore them, but it consumes tokens.
+            // "Facilitate accurate debugging with LLMs" -> LLMs don't need ANSI colors for line numbers, they need the numbers.
+            // The "Visual Polish" might be for the human review.
+            // I will use `white().dimmed()` for the number part as requested.
+            // If the user copies this, it will copy the ANSI codes.
+            // This is a tradeoff. I will implement as requested.
+            
+            indexed_content.push_str(&format!("{} {}\n", line_num.white().dimmed(), line));
+        }
+        content = indexed_content;
+    }
+
+    let tokens = bpe.encode_with_special_tokens(&content);
+    Some((content, tokens.len()))
+}

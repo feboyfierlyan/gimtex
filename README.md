@@ -42,7 +42,7 @@ Manually copy-pasting code files into ChatGPT is slow, error-prone, and leaks se
 Ensure you have Rust installed, then run:
 
 ```bash
-cargo install gimtex
+cargo install --path .
 ```
 
 *Verify installation:*

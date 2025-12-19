@@ -11,9 +11,10 @@
 > **A blazingly fast command-line utility to pack, filter, and sanitize codebases for Large Language Model (LLM) context.**
 
 </div>
+
 ---
 
-## ⚡ The Why?
+## The Why?
 
 **Stop manually copy-pasting files to ChatGPT.**  
 Stop hitting token limits because you pasted `package-lock.json`.  
@@ -21,17 +22,17 @@ Stop leaking your AWS keys in a rush to debug.
 
 **Gimtex** is the bridge between your local codebase and your AI assistant. It converts your project into a highly optimized, clean, and safe context payload in milliseconds.
 
-## 🛡️ Key Features
+## Key Features
 
-- **🧠 Context Mapping**: Automatically generates a visual **Directory Tree** and identifies your **Tech Stack** (Node, Rust, etc.) before the code content.
-- **🪙 Tokenomics**: Built-in `cl100k_base` token counter. Know exactly how big your prompt is with a "Traffic Light" dashboard (Green/Yellow/Red).
-- **🔒 Security Sentinel**: **Active Defense Protocols** redact sensitive information (API Keys, AWS Secrets) on the fly.
-- **🐙 Git Intelligence**: Use `--diff` to extract *only* what you've changed. Perfect for "Fix this bug" prompts.
-- **🎯 Precision Indexing**: Add line numbers (`-n`) to your output for accurate, reference-based debugging.
-- **📋 Clipboard Ops**: Use `-c` to pipe output directly to your system clipboard.
-- **🌐 Polyglot Protocols**: Supports **Markdown** (standard) and **XML** (Claude-optimized) formats.
+- **Context Mapping**: Automatically generates a visual **Directory Tree** and identifies your **Tech Stack** (Node, Rust, etc.) before the code content.
+- **Tokenomics**: Built-in `cl100k_base` token counter. Know exactly how big your prompt is with a "Traffic Light" dashboard (Green/Yellow/Red).
+- **Security Sentinel**: **Active Defense Protocols** redact sensitive information (API Keys, AWS Secrets) on the fly.
+- **Git Intelligence**: Use `--diff` to extract *only* what you've changed. Perfect for "Fix this bug" prompts.
+- **Precision Indexing**: Add line numbers (`-n`) to your output for accurate, reference-based debugging.
+- **Clipboard Ops**: Use `-c` to pipe output directly to your system clipboard.
+- **Polyglot Protocols**: Supports **Markdown** (standard) and **XML** (Claude-optimized) formats.
 
-## 🚀 Installation
+## Installation
 
 To install `gimtex` globally on your machine:
 
@@ -47,7 +48,7 @@ gimtex --version
 # gimtex 1.0.0
 ```
 
-## 💻 Usage
+## Usage
 
 ```bash
 gimtex [OPTIONS] [PATH]
@@ -88,7 +89,7 @@ Generating a massive context payload for Claude (XML format) to refactor the ent
 gimtex src/ --format xml > context.xml
 ```
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [ ] **Config File**: `.gimtexignore` or `.gimtex.toml` for persistent settings.
 - [ ] **Web Interface**: A localhost GUI for selecting files visually.

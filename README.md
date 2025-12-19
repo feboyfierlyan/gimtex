@@ -1,17 +1,16 @@
-  ____ ___ __  __ _____ _______  __
- / ___|_ _|  \/  |_   _| ____\ \/ /
-| |  _ | || |\/| | | | |  _|  \  / 
-| |_| || || |  | | | | | |___ /  \ 
- \____|___|_|  |_| |_| |_____/_/\_\
+<div align="center">
+
+<img src="assets/banner_shot.png" alt="GIMTEX Banner" width="600px">
 
 # GIMTEX (Git-Integrated Module for Text EXtraction)
 
-![Rust](https://img.shields.io/badge/language-Rust-orange)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)
+![Rust](https://img.shields.io/badge/language-Rust-orange?style=for-the-badge&logo=rust)
+![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)
 
 > **A blazingly fast command-line utility to pack, filter, and sanitize codebases for Large Language Model (LLM) context.**
 
+</div>
 ---
 
 ## ⚡ The Why?

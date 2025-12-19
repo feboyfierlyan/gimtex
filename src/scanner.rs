@@ -197,6 +197,9 @@ pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
         }
         final_files.push(p);
     }
+    
+    // Determinism: Sort files alphabetically
+    final_files.sort();
 
     // Context Mapping sequence
     
@@ -212,13 +215,22 @@ pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
     output.push_str(&tree_view);
     output.push_str("\n\nFILE CONTENTS:\n==================\n\n");
 
-    let mut file_count = 0;
+    let file_count = final_files.len();
 
-    for path in final_files {
-        // Apply processing (read, binary check, *sanitize*, parse tokens, format)
-        if let Some((text, count)) = process_file(&path, &bpe, &scanner, config.numbers) {
-            file_count += 1;
-            
+    // PARALLEL PROCESSING
+    // We Map files to their processed string output, then collect them IN ORDER.
+    // rayon's `par_iter` combined with `map` and `collect` preserves order if used correctly,
+    // but `collect::<Vec<_>>` definitely preserves it relative to the input iterator.
+    use rayon::prelude::*;
+    
+    let processed_results: Vec<Option<(String, usize)>> = final_files
+        .par_iter()
+        .map(|path| process_file(path, &bpe, &scanner, config.numbers))
+        .collect();
+
+    // We use zip to iterate matching files and results.
+    for (path, result) in final_files.iter().zip(processed_results.into_iter()) {
+         if let Some((text, count)) = result {
             match config.format.as_str() {
                  "xml" => {
                     output.push_str(&format!("<file path=\"{}\" tokens=\"{}\">\n", path.display(), count));
@@ -226,8 +238,7 @@ pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
                     output.push_str("\n</file>\n");
                 }
                 _ => { // markdown default
-                    // Visual Anchor: --- (Gray) File: path (Bold Yellow) --- (Gray)
-                    let header = format!("{} File: {} ({}) {}", 
+                     let header = format!("{} File: {} ({}) {}", 
                         "---".truecolor(100, 100, 100), 
                         path.display().to_string().yellow().bold(), 
                         format!("{} tokens", count).white().dimmed(),
@@ -239,9 +250,9 @@ pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
                     output.push_str("\n\n");
                 }
             }
-        }
+         }
     }
-    
+
     // Tokenomics
     let final_token_count = bpe.encode_with_special_tokens(&output).len();
 

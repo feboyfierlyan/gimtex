@@ -15,7 +15,7 @@ const BANNER: &str = r#"
  \____|___|_|  |_| |_| |_____/_/\_\
 "#;
 
-const TAGLINE: &str = ">> GIMTEX v1.0 :: Git-Integrated Module for Text EXtraction";
+const TAGLINE: &str = ">> GIMTEX v2.2 :: Git-Integrated Module for Text EXtraction";
 
 const EXAMPLES: &str = "
 EXAMPLES:

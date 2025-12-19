@@ -351,7 +351,24 @@ fn get_git_files(_path: &str) -> Result<Vec<PathBuf>> {
 
 fn get_walk_files(path: &str) -> Vec<PathBuf> {
     let mut files = Vec::new();
-    let walker = WalkBuilder::new(path).build();
+    let walker = WalkBuilder::new(path)
+        .standard_filters(true)
+        .filter_entry(|entry| {
+            let name = entry.file_name().to_string_lossy();
+            // Aggressive Optimization: Prune massive folders at the discovery level
+            if name == "node_modules" 
+                || name == ".git" 
+                || name == "target" 
+                || name == "dist" 
+                || name == "build"
+                || name == "vendor"
+                || name == ".next" {
+                return false;
+            }
+            true
+        })
+        .build();
+
     for result in walker {
         match result {
             Ok(entry) => {

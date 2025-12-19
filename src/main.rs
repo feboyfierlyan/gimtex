@@ -19,11 +19,11 @@ const TAGLINE: &str = ">> GIMTEX v2.6 :: Git-Integrated Module for Text EXtracti
 
 const EXAMPLES: &str = "
 EXAMPLES:
-  gimtex .                          # Scan current dir
-  gimtex -c                         # Copy to clipboard
-  gimtex src/ -I -o content.md      # Interactive Mode + Save to file
-  gimtex https://github.com/user/repo -I  # Scan remote repo interactively
-  gimtex --max-size 500000          # Increase size limit to 500KB
+  gimtex .                        # Standard: Scan current directory
+  gimtex -I                       # Interactive: Cherry-pick files
+  gimtex -i \"*.rs\"                # Filter: Scan only Rust files
+  gimtex src/ -I -o context.md    # Combo: Interactive + Save to file
+  gimtex https://github.com/user/repo -I  # Remote: Clone & Interactive scan
 ";
 
 #[derive(Parser, Debug)]

@@ -51,6 +51,10 @@ pub struct Args {
     /// Add line numbers to output
     #[arg(short = 'n', long)]
     numbers: bool,
+
+    /// Output to file instead of stdout
+    #[arg(short = 'o', long)]
+    output: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

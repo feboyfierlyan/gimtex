@@ -283,7 +283,10 @@ pub fn scan(path: &str, config: &crate::Args) -> Result<()> {
     let final_token_count = bpe.encode_with_special_tokens(&output).len();
 
     // Output
-    if config.copy {
+    if let Some(ref output_path) = config.output {
+        std::fs::write(output_path, &output).context("Failed to write output file")?;
+        eprintln!("{} Output written to: {}", "[OK]".green().bold(), output_path.yellow());
+    } else if config.copy {
         match Clipboard::new() {
             Ok(mut clipboard) => {
                 if let Err(e) = clipboard.set_text(&output) {

@@ -1,148 +1,244 @@
-# gimtex
+<p align="center">
+  <img src="assets/readme/hero.svg" alt="Gimtex — your codebase, ready for the next conversation. A Rust CLI for selecting source files and exporting readable context." width="100%" />
+</p>
 
-**Turn a codebase into useful context.**
+<p align="center">
+  <a href="https://github.com/feboyfierlyan/gimtex/actions/workflows/ci.yml"><img src="https://github.com/feboyfierlyan/gimtex/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI status on master" /></a>
+  <a href="Cargo.toml"><img src="https://img.shields.io/badge/version-2.6.0-aaf5a1?style=flat&amp;labelColor=17241c&amp;color=aaf5a1" alt="Version 2.6.0" /></a>
+  <a href="https://www.rust-lang.org/tools/install"><img src="https://img.shields.io/badge/built_with-Rust-aaf5a1?style=flat&amp;labelColor=17241c&amp;color=aaf5a1" alt="Built with Rust" /></a>
+  <a href=".github/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-Linux%20%7C%20macOS%20%7C%20Windows-aaf5a1?style=flat&amp;labelColor=17241c&amp;color=aaf5a1" alt="CI runs on Linux, macOS, and Windows" /></a>
+</p>
 
-A Rust CLI for selecting source files and preparing Markdown or XML for LLM workflows. Includes interactive selection, Git-diff extraction, token counts, and pattern-based secret redaction.
+<p align="center">
+  <strong>Turn the files you choose into context you can actually read.</strong><br />
+  Git-aware selection. Markdown or XML. Local token counting. One CLI.
+</p>
 
-![A recorded gimtex CLI example](assets/demo.svg)
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#see-it-in-action">Demo</a> ·
+  <a href="docs/usage.md">Usage guide</a> ·
+  <a href="docs/architecture.md">Architecture</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-The preview shows actual output from a two-file demo fixture. The 87-token payload describes that fixture only; it is not a speed benchmark. [Reproduce the example](https://github.com/feboyfierlyan/feboyfierlyan/blob/main/projects/gimtex.md).
+---
+
+## A better starting point for your next prompt
+
+A useful code conversation needs the right files, their structure, and enough
+context to connect them. Gimtex packages that material into a single readable
+export for code reviews, debugging sessions, onboarding, and LLM workflows.
+
+Choose a folder, a glob, your Git changes, or individual files. Gimtex prepares a
+file tree and source contents, applies pattern-based secret redaction, counts
+tokens locally, and writes Markdown or XML to your terminal, a file, or the
+clipboard. **No model account or API key is required.**
+
+- **Choose the scope.** Combine ignore rules, path filters, Git diff, and an interactive picker.
+- **Keep the structure.** Export relative paths, a file tree, and optional line numbers alongside the source.
+- **Know what you are sending.** See file counts and `cl100k_base` token counts before using the context elsewhere.
+- **Fit your workflow.** Use readable Markdown, parseable XML, a saved file, or clipboard output.
+- **Start from a URL.** Shallow-clone a repository into a temporary directory and scan it with the same pipeline.
+
+## See it in action
+
+![Recorded Gimtex command and the complete Markdown export from a two-file Rust fixture](assets/readme/terminal.png)
+
+<sub>Captured from the real CLI and rendered for readability. The scan path is shortened; output and metrics are unchanged. These counts describe this fixture only.</sub>
+
+[Read the exported context](docs/media/demo-context.md) ·
+[View the terminal transcript](docs/media/demo-transcript.txt) ·
+[Reproduce the image](examples/readme-demo/README.md)
 
 ## Quick start
 
-Install [Rust and Cargo](https://www.rust-lang.org/tools/install), then:
+### 1. Install from source
+
+Install [Rust and Cargo](https://www.rust-lang.org/tools/install) and Git, then:
 
 ```sh
 git clone https://github.com/feboyfierlyan/gimtex.git
 cd gimtex
-cargo install --path .
+cargo install --locked --path .
 gimtex --version
 ```
+
+This installs the binary in Cargo's bin directory. Make sure that directory is on
+your `PATH` (`$HOME/.cargo/bin` on Unix, `%USERPROFILE%\.cargo\bin` on Windows).
+
+### 2. Export your first context
 
 From the project you want to inspect:
 
 ```sh
-# Export selected Rust files to Markdown.
-gimtex src/ -i '*.rs' -o context.md
+gimtex src/ -i '*.rs' -n -o context.md
+```
 
-# Choose files interactively.
-gimtex . -I
+Open `context.md` to review the selected file tree, numbered source, and per-file
+token counts. Diagnostics and total payload metrics appear on stderr.
 
-# Extract files identified by Git's diff.
-gimtex . --diff -o changes.md
+### 3. Pick the files yourself
 
-# Include line numbers or use XML output.
-gimtex src/ -n -o context.md
+```sh
+gimtex . -I -o context.md
+```
+
+Use **↑ / ↓** to move, **Space** to toggle a file, and **Enter** to confirm.
+Candidates start selected. Selecting none exits without writing or copying.
+
+> Running `gimtex` with no arguments prints help. Supplying an option without a
+> path, such as `gimtex -i '*.rs'`, scans the current directory.
+
+## A few workflows worth keeping
+
+### Review the code you changed
+
+```sh
+gimtex . --diff -n -o changes.md
+```
+
+Extract tracked working-tree and staged changes against `HEAD`, scoped to the
+selected path. Deleted and untracked files are omitted; staged additions also
+work before the first commit.
+
+### Share only one part of a project
+
+```sh
+gimtex /path/to/project -i 'src/*.rs' -o source-context.md
+```
+
+Filters are relative to the target. A filename pattern such as `*.rs` also
+matches nested files.
+
+### Use XML in a downstream tool
+
+```sh
 gimtex src/ -f xml -o context.xml
 ```
 
-`-i` filters paths with a glob; `-I` opens the interactive picker. Running `gimtex` without any arguments prints help. Supplying options without a path (for example, `gimtex -i '*.rs'`) scans the current directory. Unknown output formats are rejected.
+The export is one escaped `<codebase>` document containing structure, file
+contents, and token attributes. [See the output contract →](docs/output-format.md)
 
-## What it does
-
-- Walks the source tree, applying ignore rules and a per-file size limit (100,000 bytes by default).
-- Lets you narrow the input with glob filters, Git changes, or an interactive picker.
-- Emits a file tree, source contents, and token counts using `cl100k_base`.
-- Writes to stdout, a file (`-o`), or the clipboard (`-c`).
-- Matches and redacts some common secret patterns.
-- Can shallow-clone a supplied repository URL into a temporary directory before scanning it.
+### Explore a remote repository
 
 ```sh
-# Scan a public repository. Requires Git.
-gimtex https://github.com/rust-lang/rust-by-example -I
-
-# Copy output to the clipboard.
-gimtex src/ -c
-
-# Increase the per-file limit to 500,000 bytes.
-gimtex src/ --max-size 500000
+gimtex https://github.com/rust-lang/rust-by-example -I -o context.md
 ```
 
-## How it works
+Git handles the shallow clone and authentication. The temporary clone is removed
+when the command finishes. Gimtex does not require a model API.
 
-[`src/main.rs`](src/main.rs) handles CLI arguments, optional configuration loading, and temporary clones. [`src/scanner.rs`](src/scanner.rs) handles traversal, selection, redaction, token counting, the file tree, and output.
+### Save and copy the same context
 
-The implementation uses `clap`, `ignore`, `glob`, `regex`, `tiktoken-rs`, `dialoguer`, and `arboard`. File paths are sorted before processing so the output order is deterministic.
+```sh
+gimtex src/ -o context.md -c
+```
 
-## File selection and configuration
+File and clipboard output can be combined. A clipboard failure returns an error;
+an already written file remains available.
 
-Paths in filters and exports are relative to the selected directory (or the parent
-of a single input file). For example, `gimtex /path/to/project -i 'src/*.rs'` selects
-Rust files below that project's `src/`. A filename glob such as `*.rs` also matches
-nested files.
+[All options, configuration, and troubleshooting →](docs/usage.md)
 
-Put `gimtex.toml` in the selected directory, or alongside a single input file. A
-remote scan uses the cloned repository's configuration. The current working
-directory's configuration is not applied to a different target.
+## Make the selection yours
+
+Put `gimtex.toml` in the directory you are scanning:
 
 ```toml
-ignore = ["private/", "*.log", "!keep.log"]
+ignore = [
+  "private/",
+  "*.log",
+  "!keep.log",
+]
 ```
 
-Patterns use gitignore syntax, including negation and directory patterns. They
-apply to normal and Git-diff scans. A negation only re-includes a file excluded by
-a custom pattern; it does not override built-in or Git ignore rules. As with Git,
-a file cannot be re-included while its parent directory is excluded. Invalid TOML,
-unknown configuration keys, and invalid patterns cause an error.
+Custom rules use gitignore syntax and apply to both regular and diff scans.
+Configuration is target-local: scanning a different directory uses that
+directory's `gimtex.toml`, not the caller's. A single-file scan uses its parent
+folder; a remote scan uses the clone's root.
 
-Hidden files and ignored files are omitted. Git ignore rules follow the `ignore`
-crate's defaults, including requiring a Git repository for `.gitignore` rules.
-The subdirectories `node_modules`, `.git`, `target`, `dist`, `build`, `vendor`, and
-`.next` are pruned. Discovered symlinks are not followed; an explicitly supplied
-symlink target is resolved before scanning.
+Gimtex also respects standard ignore behavior and prunes common generated
+subdirectories such as `node_modules`, `target`, and `dist`.
+[Read the precise selection rules →](docs/usage.md#file-selection-rules)
 
-`--diff` runs in the selected repository and is restricted to the selected path.
-It includes tracked working-tree and staged changes against `HEAD`, including
-rename destinations. Deleted and untracked files are omitted. In a repository
-without a first commit, staged additions are included. An unchanged remote clone
-will normally have no Git diff.
+## Inside Gimtex
 
-## Export behavior
+![Gimtex architecture: resolve a target and configuration, select files, prepare sanitized source, and export a readable payload](assets/readme/architecture.svg)
 
-- Markdown uses fenced source blocks, with longer fences when the source contains
-  backticks. XML is one `<codebase>` document with escaped attributes and text.
-- Payloads contain no generated terminal color codes. Source text is retained
-  after secret redaction and optional line numbering. XML-invalid control
-  characters are replaced with `U+FFFD`.
-- Files larger than `--max-size`, files containing NUL bytes, and non-UTF-8 files
-  are skipped with a diagnostic. The tree and file count include only exported
-  files. Other read/traversal failures return a nonzero status.
-- Project summaries are derived only from included, sanitized root manifests;
-  filtering out `Cargo.toml` or `package.json` also removes their summary.
-- Per-file token counts describe sanitized, optionally numbered source text.
-  Total tokens include the complete serialized payload. Literal tokenizer special
-  tokens are counted as ordinary source text. Character counts count Unicode
-  characters, not UTF-8 bytes.
-- `-o` excludes that destination from scanning and replaces it only after the
-  full payload is ready. Repeating an export cannot ingest its previous output.
-  A single input file cannot also be the output. Replacing an output symlink
-  replaces the link itself, not its target.
-- `-o context.md -c` writes the file and copies the same payload. Clipboard
-  failures return a nonzero status; an already written file remains available.
-  Clipboard persistence on Linux depends on the active clipboard service.
-- Diagnostics and metrics go to stderr; stdout contains only the payload.
-  Interactive selection starts with all candidates selected; choosing none exits
-  without writing or copying. Size and encoding checks still apply afterward.
+The implementation has two main modules:
 
-## Current limits
+- [`src/main.rs`](src/main.rs) owns CLI parsing, target resolution, temporary clones, and configuration loading.
+- [`src/scanner.rs`](src/scanner.rs) owns discovery, selection, bounded reads, redaction, formatting, token counts, and output delivery.
 
-- **Review before sharing.** Secret detection is pattern-based and will miss formats outside its rules. It does not certify that output is safe to publish.
-- **Token counts depend on the tokenizer.** `cl100k_base` is an estimate for workflows using other tokenizers.
-- **Performance depends on the input.** No comparative speed claim is made here; this repository does not currently include a benchmark suite.
+File paths are sorted before parallel processing. Only files actually exported
+appear in the tree and counts, and dependency summaries come from included,
+sanitized manifests.
 
-## Development
+[Explore the pipeline, dependency choices, and failure behavior →](docs/architecture.md)
+
+## Built to be checked
+
+[CI](https://github.com/feboyfierlyan/gimtex/actions/workflows/ci.yml) runs formatting,
+Clippy, regression tests, release builds, and an independent XML parser on
+**Linux, macOS, and Windows**.
+
+Regression fixtures cover Git path scoping, renames and unusual filenames,
+ignore rules, repeated exports, secret redaction, binary/size limits, token
+accounting, and simulated remote-clone success and failure. Tests use local
+temporary files and do not modify the system clipboard.
 
 ```sh
-cargo build --locked
 cargo test --locked
 cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
-cargo run -- --help
 ```
 
-The tests use local temporary fixtures and Git repositories; they do not contact
-remote services or modify the system clipboard. CI runs on Linux, macOS, and
-Windows and independently parses an XML export. Interactive terminal selection
-and clipboard services also need environment-specific smoke testing.
+[Development and contribution guide →](CONTRIBUTING.md)
 
-[More projects by Boy](https://github.com/feboyfierlyan) · [Portfolio](https://feboyfierlyan.com/)
+## Know the boundaries
+
+- **Redaction is a review aid.** It matches known patterns and can miss secrets or redact ordinary values. Review an export before sharing it.
+- **Tokens depend on the tokenizer.** Counts use `cl100k_base`; another model's tokenizer may produce different counts.
+- **Text goes in, text comes out.** Oversized files, files containing NUL bytes, and non-UTF-8 contents are skipped with a diagnostic. The default per-file limit is **100,000 bytes**; adjust it with `--max-size`.
+- **Clipboard behavior is platform-dependent.** It requires an available clipboard service; persistence after exit on Linux depends on that service.
+- **No speed claims.** Parallel file preparation is part of the implementation, but the repository does not yet include a benchmark suite.
+
+<details>
+<summary><strong>Does Gimtex send my source code to an AI service?</strong></summary>
+
+No model API is called. File processing, secret-pattern matching, and token
+counting happen locally. Supplying a repository URL invokes Git to clone it;
+installation may also download build dependencies. You decide where an exported
+file or copied context goes next.
+
+</details>
+
+<details>
+<summary><strong>Why is a file missing from my export?</strong></summary>
+
+Check the selected path, hidden/ignore rules, custom config, glob filter,
+`--diff` scope, interactive selection, and per-file size limit. Binary and
+non-UTF-8 files are skipped; diagnostics explain those exclusions. With
+`--diff`, untracked files are not included. See the
+[troubleshooting guide](docs/usage.md#troubleshooting).
+
+</details>
+
+<details>
+<summary><strong>Can I run the same export command twice?</strong></summary>
+
+Yes. With `-o`, the output destination is excluded from scanning, so an old
+export does not become input to the next one. The complete new payload is
+prepared before replacing the destination. Prefer `-o context.md` over shell
+redirection into the scanned directory.
+
+</details>
+
+---
+
+<p align="center">
+  Built by <a href="https://github.com/feboyfierlyan">Boy</a>.<br />
+  <a href="https://github.com/feboyfierlyan/gimtex/issues/new/choose">Report a bug or suggest a feature</a> ·
+  <a href="CONTRIBUTING.md">Contribute</a> ·
+  <a href="https://feboyfierlyan.com/">More projects</a>
+</p>

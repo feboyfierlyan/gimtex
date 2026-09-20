@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="904" viewBox="0 0 1280 904" role="img" aria-labelledby="title desc">
+<title id="title">Gimtex: a recorded export and its actual Markdown output</title>
+<desc id="desc">Two Rust source files are exported with line numbers. The left panel shows the command and its diagnostics; the right panel shows the complete generated context.md. The absolute scan path is shortened for readability.</desc>
+<rect width="1280" height="904" rx="22" fill="#0a1410"/>
+<rect x="1" y="1" width="1278" height="902" rx="21" fill="none" stroke="#2b4033"/>
+<path d="M0 66H1280 M600 66V834" stroke="#2b4033"/>
+<circle cx="32" cy="33" r="5" fill="#91b299"/><circle cx="50" cy="33" r="5" fill="#607e68"/><circle cx="68" cy="33" r="5" fill="#3e5a47"/>
+
+<text x="92" y="39" font-size="16" fill="#b9cdc0" font-family="monospace" font-weight="400" xml:space="preserve">gimtex / recorded session</text>
+<text x="1238" y="39" font-size="15" fill="#aaf5a1" font-family="monospace" font-weight="400" xml:space="preserve">01</text>
+<text x="36" y="119" font-size="13" fill="#aaf5a1" font-family="monospace" font-weight="700" xml:space="preserve">RUN THE COMMAND</text>
+<text x="36" y="163" font-size="18" fill="#f0f5f1" font-family="monospace" font-weight="400" xml:space="preserve">$ gimtex examples/readme-demo/src</text>
+<text x="58" y="192" font-size="18" fill="#aaf5a1" font-family="monospace" font-weight="400" xml:space="preserve">-i &#x27;*.rs&#x27; -n -o context.md</text>
+<text x="36" y="254" font-size="16" fill="#99afa1" font-family="monospace" font-weight="400" xml:space="preserve">[&gt;&gt;] Scanning target:</text>
+<text x="36" y="280" font-size="16" fill="#99afa1" font-family="monospace" font-weight="400" xml:space="preserve">     examples/readme-demo/src</text>
+<text x="36" y="318" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">[OK] Output written to: context.md</text>
+<text x="36" y="366" font-size="16" fill="#99afa1" font-family="monospace" font-weight="400" xml:space="preserve">[i] Payload Metrics:</text>
+<text x="36" y="394" font-size="17" fill="#aaf5a1" font-family="monospace" font-weight="400" xml:space="preserve">2 files | 126 tokens | 337 chars</text>
+<rect x="36" y="638" width="524" height="144" rx="12" fill="#12231a" stroke="#294533"/>
+<text x="58" y="672" font-size="13" fill="#aaf5a1" font-family="monospace" font-weight="700" xml:space="preserve">ONE FILE. THE CONTEXT YOU SELECTED.</text>
+<text x="58" y="704" font-size="18" fill="#dbe8df" font-family="sans-serif" font-weight="400" xml:space="preserve">A readable tree, numbered source,</text>
+<text x="58" y="730" font-size="18" fill="#dbe8df" font-family="sans-serif" font-weight="400" xml:space="preserve">and token counts in a single export.</text>
+<text x="634" y="119" font-size="17" fill="#aaf5a1" font-family="monospace" font-weight="700" xml:space="preserve">context.md</text>
+<text x="634" y="162" font-size="16" fill="#aaf5a1" font-family="monospace" font-weight="400" xml:space="preserve"># Project structure</text>
+<text x="634" y="185" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve"></text>
+<text x="634" y="208" font-size="16" fill="#708e79" font-family="monospace" font-weight="400" xml:space="preserve">```</text>
+<text x="634" y="231" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">.</text>
+<text x="634" y="254" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">├── main.rs</text>
+<text x="634" y="277" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">└── math.rs</text>
+<text x="634" y="300" font-size="16" fill="#708e79" font-family="monospace" font-weight="400" xml:space="preserve">```</text>
+<text x="634" y="323" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve"></text>
+<text x="634" y="346" font-size="16" fill="#aaf5a1" font-family="monospace" font-weight="400" xml:space="preserve"># File contents</text>
+<text x="634" y="369" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve"></text>
+<text x="634" y="392" font-size="16" fill="#aaf5a1" font-family="monospace" font-weight="400" xml:space="preserve">## File: main\.rs (42 tokens)</text>
+<text x="634" y="415" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve"></text>
+<text x="634" y="438" font-size="16" fill="#708e79" font-family="monospace" font-weight="400" xml:space="preserve">```</text>
+<text x="634" y="461" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   1 | mod math;</text>
+<text x="634" y="484" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   2 | </text>
+<text x="634" y="507" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   3 | fn main() {</text>
+<text x="634" y="530" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   4 |     println!(&quot;The answer is {}&quot;, math::double(21));</text>
+<text x="634" y="553" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   5 | }</text>
+<text x="634" y="576" font-size="16" fill="#708e79" font-family="monospace" font-weight="400" xml:space="preserve">```</text>
+<text x="634" y="599" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve"></text>
+<text x="634" y="622" font-size="16" fill="#aaf5a1" font-family="monospace" font-weight="400" xml:space="preserve">## File: math\.rs (31 tokens)</text>
+<text x="634" y="645" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve"></text>
+<text x="634" y="668" font-size="16" fill="#708e79" font-family="monospace" font-weight="400" xml:space="preserve">```</text>
+<text x="634" y="691" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   1 | pub fn double(value: i32) -&gt; i32 {</text>
+<text x="634" y="714" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   2 |     value * 2</text>
+<text x="634" y="737" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve">   3 | }</text>
+<text x="634" y="760" font-size="16" fill="#708e79" font-family="monospace" font-weight="400" xml:space="preserve">```</text>
+<text x="634" y="783" font-size="16" fill="#dbe8df" font-family="monospace" font-weight="400" xml:space="preserve"></text>
+<path d="M0 834H1280" stroke="#2b4033"/>
+<text x="36" y="876" font-size="14" fill="#99afa1" font-family="sans-serif" font-weight="400" xml:space="preserve">Actual CLI output · synthetic two-file fixture · path shortened · not a benchmark</text>
+</svg>

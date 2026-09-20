@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="600" viewBox="0 0 1280 600" role="img" aria-labelledby="title desc">
+<title id="title">Inside Gimtex: from a target path to a context export</title>
+<desc id="desc">Main resolves the local target or temporary Git clone and loads configuration. Scanner discovers and filters paths, optionally selects interactively, reads and redacts files, then renders and counts the final payload before writing to stdout, file, or clipboard.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#759f80"/></marker></defs>
+<rect width="1280" height="600" rx="22" fill="#0a1410"/>
+<rect x="1" y="1" width="1278" height="598" rx="21" fill="none" stroke="#2b4033"/>
+<text x="42" y="49" font-family="monospace" font-size="13" fill="#aaf5a1" letter-spacing="2">UNDER THE HOOD</text>
+<text x="42" y="91" font-family="sans-serif" font-size="31" font-weight="700" fill="#eef5ef">One pipeline. Explicit boundaries.</text>
+<text x="42" y="122" font-family="sans-serif" font-size="17" fill="#9ab5a3">Configuration and selection decide what enters. Only exported files shape the payload.</text>
+<g font-family="monospace" font-size="12" fill="#8aa792"><text x="43" y="178">src/main.rs</text><text x="348" y="178">src/scanner.rs</text></g>
+<g stroke="#759f80" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M303 281H335"/><path d="M609 281H641"/><path d="M915 281H947"/></g>
+<g>
+<rect x="42" y="197" width="261" height="168" rx="12" fill="#13251a" stroke="#3b5a43"/>
+<rect x="348" y="197" width="261" height="168" rx="12" fill="#101f16" stroke="#3b5a43"/>
+<rect x="654" y="197" width="261" height="168" rx="12" fill="#101f16" stroke="#3b5a43"/>
+<rect x="960" y="197" width="278" height="168" rx="12" fill="#18311e" stroke="#7aae77"/>
+</g>
+<g font-family="monospace" font-size="12" fill="#aaf5a1"><text x="62" y="228">01 / RESOLVE</text><text x="368" y="228">02 / SELECT</text><text x="674" y="228">03 / PREPARE</text><text x="980" y="228">04 / EXPORT</text></g>
+<g font-family="sans-serif" font-size="23" font-weight="700" fill="#eef5ef"><text x="62" y="266">Target + config</text><text x="368" y="266">Candidate files</text><text x="674" y="266">Sanitized source</text><text x="980" y="266">Readable context</text></g>
+<g font-family="sans-serif" font-size="16" fill="#acc2b3">
+<text x="62" y="302">Local path or Git clone</text><text x="62" y="328">CLI + gimtex.toml</text>
+<text x="368" y="302">Ignore / glob / diff / picker</text><text x="368" y="328">Sorted relative paths</text>
+<text x="674" y="302">Bounded read + redaction</text><text x="674" y="328">Parallel file processing</text>
+<text x="980" y="302">Tree + contents + tokens</text><text x="980" y="328">Markdown or XML</text>
+</g>
+<path d="M1099 365V399" fill="none" stroke="#759f80" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="960" y="413" width="278" height="60" rx="10" fill="#13251a" stroke="#3b5a43"/>
+<text x="1099" y="449" text-anchor="middle" font-family="monospace" font-size="15" fill="#d2e8d7">stdout / file / clipboard</text>
+<g font-family="sans-serif" font-size="16" fill="#9ab5a3"><text x="43" y="432">Binary, oversized, and non-UTF-8 files are skipped.</text><text x="43" y="460">Read and output failures propagate as nonzero exit statuses.</text></g>
+<path d="M42 506H1238" stroke="#2b4033"/>
+<text x="42" y="550" font-family="monospace" font-size="14" fill="#aaf5a1">NO MODEL API REQUIRED</text>
+<text x="341" y="550" font-family="sans-serif" font-size="16" fill="#9ab5a3">Tokenization and pattern matching run locally. Remote cloning explicitly invokes Git.</text>
+</svg>

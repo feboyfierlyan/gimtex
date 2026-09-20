@@ -1,0 +1,5 @@
+# Keep the recorded demo input and transcript stable across checkouts.
+examples/readme-demo/src/*.rs text eol=lf
+docs/media/* text eol=lf
+assets/readme/*.svg text eol=lf
+assets/readme/*.png binary

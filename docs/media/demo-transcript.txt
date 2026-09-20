@@ -1,0 +1,4 @@
+$ gimtex examples/readme-demo/src -i '*.rs' -n -o context.md
+[>>] Scanning target: examples/readme-demo/src
+[OK] Output written to: context.md
+[i] Payload Metrics: 2 files | 126 tokens | 337 chars

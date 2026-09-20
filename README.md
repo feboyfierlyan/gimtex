@@ -1,137 +1,81 @@
-<div align="center">
+# gimtex
 
-<img src="assets/banner_shot.png" alt="GIMTEX Banner" width="600px">
+**Turn a codebase into useful context.**
 
-# GIMTEX
-### Git-Integrated Module for Text EXtraction
+A Rust CLI for selecting source files and preparing Markdown or XML for LLM workflows. Includes interactive selection, Git-diff extraction, token counts, and pattern-based secret redaction.
 
-![Rust](https://img.shields.io/badge/language-Rust-orange?style=for-the-badge&logo=rust)
-![Version](https://img.shields.io/badge/version-2.6.0-blue?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
-![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge)
+![A recorded gimtex CLI example](assets/demo.svg)
 
-> **"The Ultimate Bridge Between Code and AI."**
-> 
-> *Gimtex converts your entire project into a highly optimized, clean, and safe context payload for LLMs (ChatGPT, Claude, deepseek) in milliseconds.*
+The preview shows actual output from a two-file demo fixture. The 87-token payload describes that fixture only; it is not a speed benchmark. [Reproduce the example](https://github.com/feboyfierlyan/feboyfierlyan/blob/main/projects/gimtex.md).
 
-</div>
+## Quick start
 
----
+Install [Rust and Cargo](https://www.rust-lang.org/tools/install), then:
 
-## Why Gimtex?
-
-Manually copy-pasting code files into ChatGPT is slow, error-prone, and leaks secrets.
-**Gimtex** solves this by automating the entire "Context Extraction" pipeline:
-
-| Feature | Description |
-| :--- | :--- |
-| **Remote Scout** | Clone & scan **any public Git repo** URL directly without local clutter. |
-| **Interactive Mode** | **Cherry-pick** files via a TUI checkbox menu (`-I`) before generating context. |
-| **Active Defense** | Automatically **redacts API keys**, secrets, and passwords from the output. |
-| **Global IO** | Save context directly to a file (`-o context.md`) or copy to clipboard (`-c`). |
-| **Smart Pruning** | Hardcoded ignores for `node_modules`, `.git`, `target`, `dist`, etc. |
-| **Git Intelligence** | Use `--diff` to extract **only changed files** for targeted debugging. |
-| **Tokenomics** | Live **Token Counter** (GPT-4 optimized) for every file processed. |
-| **Blazingly Fast** | Written in **Rust** with **Rayon** parallel processing. Scans huge repos in ms. |
-
----
-
-## Installation
-
-### Via Cargo (Recommended)
-Ensure you have Rust installed, then run:
-
-```bash
+```sh
+git clone https://github.com/feboyfierlyan/gimtex.git
+cd gimtex
 cargo install --path .
-```
-
-*Verify installation:*
-```bash
 gimtex --version
-# gimtex 2.6.0
 ```
 
----
+From the project you want to inspect:
 
-## Usage Guide
+```sh
+# Export selected Rust files to Markdown.
+gimtex src/ -i '*.rs' -o context.md
 
-### 1. The "Standard" Scan
-Dump the current directory (recursively) to stdout. Respects `.gitignore`.
-```bash
-gimtex .
+# Choose files interactively.
+gimtex . -I
+
+# Extract files identified by Git's diff.
+gimtex . --diff -o changes.md
+
+# Include line numbers or use XML output.
+gimtex src/ -n -o context.md
+gimtex src/ -f xml -o context.xml
 ```
 
-### 2. The "God Mode" (Interactive) or script kiddie mode
-Launch a Terminal UI to manually toggle which files you want to include.
-```bash
-gimtex -I
-```
+`-i` filters paths with a glob; `-I` opens the interactive picker. Running `gimtex` without a path or mode prints help.
 
-### 3. Remote Scout (GitHub/GitLab)
-Clone a remote repository to a temp folder, scan it, and print the context.
-```bash
-# Clone & Scan
-gimtex https://github.com/rust-lang/rust-by-example
+## What it does
 
-# Clone & Interactive Pick
+- Walks the source tree, applying ignore rules and a per-file size limit (100,000 bytes by default).
+- Lets you narrow the input with glob filters, Git changes, or an interactive picker.
+- Emits a file tree, source contents, and token counts using `cl100k_base`.
+- Writes to stdout, a file (`-o`), or the clipboard (`-c`).
+- Matches and redacts some common secret patterns.
+- Can shallow-clone a supplied repository URL into a temporary directory before scanning it.
+
+```sh
+# Scan a public repository. Requires Git.
 gimtex https://github.com/rust-lang/rust-by-example -I
-```
 
-### 4. Output Management
-Stop piping to files manually. Use the built-in IO flags.
-```bash
-# Save to file
-gimtex src/ -o context.md
-
-# Copy to System Clipboard
+# Copy output to the clipboard.
 gimtex src/ -c
+
+# Increase the per-file limit to 500,000 bytes.
+gimtex src/ --max-size 500000
 ```
 
-### 5. Precision & Safety
-```bash
-# Filter: Only scan Rust files
-gimtex -i "*.rs"
+## How it works
 
-# Diff: Only scan raw changes (Staged + Modified)
-gimtex --diff
+[`src/main.rs`](src/main.rs) handles CLI arguments, optional configuration loading, and temporary clones. [`src/scanner.rs`](src/scanner.rs) handles traversal, selection, redaction, token counting, the file tree, and output.
 
-# Max Size: Increase limit to 500KB (Default 100KB)
-gimtex --max-size 500000
+The implementation uses `clap`, `ignore`, `glob`, `regex`, `tiktoken-rs`, `dialoguer`, and `arboard`. File paths are sorted before processing so the output order is deterministic.
 
-# Numbers: Add line numbers for debugging references
-gimtex src/main.rs -n
+## Current limits
+
+- **Review before sharing.** Secret detection is pattern-based and will miss formats outside its rules. It does not certify that output is safe to publish.
+- **Token counts depend on the tokenizer.** `cl100k_base` is an estimate for workflows using other tokenizers.
+- **Configuration is partial.** `gimtex.toml` and its `ignore` list are parsed and logged, but those custom ignore patterns are not yet passed to the scanner.
+- **Performance depends on the input.** No comparative speed claim is made here; this repository does not currently include a benchmark suite.
+
+## Development
+
+```sh
+cargo build
+cargo run -- --help
 ```
 
----
-
-## Configuration
-
-Gimtex is zero-config by default, but you can add a `gimtex.toml` to your project root for persistent settings.
-
-**gimtex.toml**
-```toml
-# Currently supported:
-ignore = [
-    "*.log",
-    "temp/",
-    "legacy_code/"
-]
-```
-
-*(More config options coming in v3.0)*
-
----
-
-## Architecture
-
-- **Engine**: Rust (2021 Edition)
-- **Parallelism**: Rayon (Work-Stealing Iterator)
-- **Tokenizer**: `tiktoken-rs` (cl100k_base)
-- **Parser**: `syn` / `serde` / `toml` / `regex`
-- **UI**: `dialoguer` / `indicatif` / `colored`
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[More projects by Boy](https://github.com/feboyfierlyan) · [Portfolio](https://feboyfierlyan.com/)

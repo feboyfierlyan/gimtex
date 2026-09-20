@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="330" viewBox="0 0 900 330" role="img" aria-labelledby="title desc">
+  <title id="title">gimtex — a real CLI workflow</title>
+  <desc id="desc">gimtex src/ -i '*.rs' -o context.md. Two demo Rust files are exported to context.md. The fixture's resulting payload is 87 tokens and 336 characters.</desc>
+  <rect width="900" height="330" rx="14" fill="#111916"/>
+  <path d="M0 53H900" stroke="#2c3932"/>
+  <circle cx="27" cy="27" r="5" fill="#718078"/>
+  <circle cx="45" cy="27" r="5" fill="#718078"/>
+  <circle cx="63" cy="27" r="5" fill="#718078"/>
+  <text x="450" y="32" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="14" fill="#b0bdb5">gimtex / recorded example</text>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="23">
+    <text x="32" y="100" fill="#d1eaa2">$ gimtex src/ -i '*.rs' -o context.md</text>
+    <text x="32" y="145" fill="#a9b9af">[&gt;&gt;] Scanning target: src/</text>
+    <text x="32" y="182" fill="#a9b9af">[&gt;&gt;] Precision Filtering: *.rs</text>
+    <text x="32" y="219" fill="#edf3ee">[OK] Output written to: context.md</text>
+    <text x="32" y="256" fill="#d1eaa2">[i] Payload Metrics: 87 tokens | 336 chars</text>
+  </g>
+  <text x="32" y="302" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#a9b9af">Two-file demo fixture · gimtex 2.6.0 · actual command output, not a speed benchmark</text>
+</svg>

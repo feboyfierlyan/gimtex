@@ -36,7 +36,7 @@ gimtex src/ -n -o context.md
 gimtex src/ -f xml -o context.xml
 ```
 
-`-i` filters paths with a glob; `-I` opens the interactive picker. Running `gimtex` without a path or mode prints help.
+`-i` filters paths with a glob; `-I` opens the interactive picker. Running `gimtex` without any arguments prints help. Supplying options without a path (for example, `gimtex -i '*.rs'`) scans the current directory. Unknown output formats are rejected.
 
 ## What it does
 
@@ -64,18 +64,85 @@ gimtex src/ --max-size 500000
 
 The implementation uses `clap`, `ignore`, `glob`, `regex`, `tiktoken-rs`, `dialoguer`, and `arboard`. File paths are sorted before processing so the output order is deterministic.
 
+## File selection and configuration
+
+Paths in filters and exports are relative to the selected directory (or the parent
+of a single input file). For example, `gimtex /path/to/project -i 'src/*.rs'` selects
+Rust files below that project's `src/`. A filename glob such as `*.rs` also matches
+nested files.
+
+Put `gimtex.toml` in the selected directory, or alongside a single input file. A
+remote scan uses the cloned repository's configuration. The current working
+directory's configuration is not applied to a different target.
+
+```toml
+ignore = ["private/", "*.log", "!keep.log"]
+```
+
+Patterns use gitignore syntax, including negation and directory patterns. They
+apply to normal and Git-diff scans. A negation only re-includes a file excluded by
+a custom pattern; it does not override built-in or Git ignore rules. As with Git,
+a file cannot be re-included while its parent directory is excluded. Invalid TOML,
+unknown configuration keys, and invalid patterns cause an error.
+
+Hidden files and ignored files are omitted. Git ignore rules follow the `ignore`
+crate's defaults, including requiring a Git repository for `.gitignore` rules.
+The subdirectories `node_modules`, `.git`, `target`, `dist`, `build`, `vendor`, and
+`.next` are pruned. Discovered symlinks are not followed; an explicitly supplied
+symlink target is resolved before scanning.
+
+`--diff` runs in the selected repository and is restricted to the selected path.
+It includes tracked working-tree and staged changes against `HEAD`, including
+rename destinations. Deleted and untracked files are omitted. In a repository
+without a first commit, staged additions are included. An unchanged remote clone
+will normally have no Git diff.
+
+## Export behavior
+
+- Markdown uses fenced source blocks, with longer fences when the source contains
+  backticks. XML is one `<codebase>` document with escaped attributes and text.
+- Payloads contain no generated terminal color codes. Source text is retained
+  after secret redaction and optional line numbering. XML-invalid control
+  characters are replaced with `U+FFFD`.
+- Files larger than `--max-size`, files containing NUL bytes, and non-UTF-8 files
+  are skipped with a diagnostic. The tree and file count include only exported
+  files. Other read/traversal failures return a nonzero status.
+- Project summaries are derived only from included, sanitized root manifests;
+  filtering out `Cargo.toml` or `package.json` also removes their summary.
+- Per-file token counts describe sanitized, optionally numbered source text.
+  Total tokens include the complete serialized payload. Literal tokenizer special
+  tokens are counted as ordinary source text. Character counts count Unicode
+  characters, not UTF-8 bytes.
+- `-o` excludes that destination from scanning and replaces it only after the
+  full payload is ready. Repeating an export cannot ingest its previous output.
+  A single input file cannot also be the output. Replacing an output symlink
+  replaces the link itself, not its target.
+- `-o context.md -c` writes the file and copies the same payload. Clipboard
+  failures return a nonzero status; an already written file remains available.
+  Clipboard persistence on Linux depends on the active clipboard service.
+- Diagnostics and metrics go to stderr; stdout contains only the payload.
+  Interactive selection starts with all candidates selected; choosing none exits
+  without writing or copying. Size and encoding checks still apply afterward.
+
 ## Current limits
 
 - **Review before sharing.** Secret detection is pattern-based and will miss formats outside its rules. It does not certify that output is safe to publish.
 - **Token counts depend on the tokenizer.** `cl100k_base` is an estimate for workflows using other tokenizers.
-- **Configuration is partial.** `gimtex.toml` and its `ignore` list are parsed and logged, but those custom ignore patterns are not yet passed to the scanner.
 - **Performance depends on the input.** No comparative speed claim is made here; this repository does not currently include a benchmark suite.
 
 ## Development
 
 ```sh
-cargo build
+cargo build --locked
+cargo test --locked
+cargo fmt --check
+cargo clippy --locked --all-targets -- -D warnings
 cargo run -- --help
 ```
+
+The tests use local temporary fixtures and Git repositories; they do not contact
+remote services or modify the system clipboard. CI runs on Linux, macOS, and
+Windows and independently parses an XML export. Interactive terminal selection
+and clipboard services also need environment-specific smoke testing.
 
 [More projects by Boy](https://github.com/feboyfierlyan) · [Portfolio](https://feboyfierlyan.com/)

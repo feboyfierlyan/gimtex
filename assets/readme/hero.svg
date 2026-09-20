@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="550" viewBox="0 0 1280 550" role="img" aria-labelledby="title desc">
+  <title id="title">Gimtex — your codebase, ready for the next conversation</title>
+  <desc id="desc">A Rust CLI that selects source files and turns them into readable Markdown or XML context. A conceptual diagram shows source files flowing into context.md.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#132a1d"/><stop offset=".55" stop-color="#091710"/><stop offset="1" stop-color="#0c1913"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#9ef890" stop-opacity=".11"/><stop offset="1" stop-color="#9ef890" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse"><path d="M44 0H0V44" fill="none" stroke="#7aad88" stroke-opacity=".06"/></pattern>
+  </defs>
+  <rect width="1280" height="550" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="550" rx="24" fill="url(#grid)"/>
+  <ellipse cx="1015" cy="260" rx="360" ry="330" fill="url(#glow)"/>
+  <rect x="1" y="1" width="1278" height="548" rx="23" fill="none" stroke="#34523d"/>
+  <g transform="translate(52 43)" fill="none" stroke="#adf59c" stroke-width="3" stroke-linecap="square"><path d="M12 0H0V27H12 M27 0H39V27H27"/><path d="M14 8L23 13.5L14 19" stroke-width="2.5"/></g>
+  <text x="108" y="65" fill="#edf8ee" font-size="22" font-weight="700" font-family="sans-serif" letter-spacing="3">GIMTEX</text>
+  <text x="1228" y="62" text-anchor="end" fill="#91b39b" font-family="monospace" font-size="13" letter-spacing="2">SOURCE → CONTEXT</text>
+  <g font-family="sans-serif" font-size="65" font-weight="700" letter-spacing="-2">
+    <text x="52" y="180" fill="#f2f7f1">Your codebase.</text>
+    <text x="52" y="258" fill="#f2f7f1">Ready for the</text>
+    <text x="52" y="336" fill="#adf59c">next conversation.</text>
+  </g>
+  <text x="55" y="390" fill="#afc6b6" font-family="sans-serif" font-size="20">Select what matters. Export context you can read.</text>
+  <g font-family="monospace" font-size="13" fill="#d3e9d9">
+    <rect x="54" y="443" width="114" height="35" rx="17" fill="#1b3424" stroke="#375b40"/><text x="111" y="465" text-anchor="middle">RUST CLI</text>
+    <rect x="179" y="443" width="186" height="35" rx="17" fill="#1b3424" stroke="#375b40"/><text x="272" y="465" text-anchor="middle">MARKDOWN + XML</text>
+    <rect x="376" y="443" width="184" height="35" rx="17" fill="#1b3424" stroke="#375b40"/><text x="468" y="465" text-anchor="middle">LOCAL PROCESSING</text>
+  </g>
+  <g font-family="monospace">
+    <rect x="797" y="140" width="374" height="257" rx="15" fill="#12281b" stroke="#375a40" transform="rotate(7 984 268)"/>
+    <rect x="783" y="138" width="374" height="257" rx="15" fill="#142f1f" stroke="#45674d" transform="rotate(-4 970 266)"/>
+    <rect x="773" y="151" width="392" height="284" rx="14" fill="#0b1810" stroke="#719c77"/>
+    <path d="M773 200H1165" stroke="#34503b"/>
+    <circle cx="797" cy="176" r="4" fill="#adf59c"/>
+    <text x="813" y="182" fill="#ebf4e9" font-size="16">context.md</text>
+    <text x="1137" y="182" text-anchor="end" fill="#819f88" font-size="11">EXPORT</text>
+    <text x="799" y="236" fill="#adf59c" font-size="15"># Project structure</text>
+    <g fill="#b7cfbd" font-size="15"><text x="799" y="270">├── main.rs</text><text x="799" y="296">└── math.rs</text></g>
+    <path d="M800 315H1139" stroke="#263d2d"/>
+    <text x="799" y="347" fill="#adf59c" font-size="15"># File contents</text>
+    <g fill="#a5baab" font-size="14"><text x="799" y="379">fn main() {</text><text x="799" y="403">    // the source you selected</text></g>
+    <path d="M685 269H746 M737 261L746 269L737 277" fill="none" stroke="#adf59c" stroke-width="2"/>
+    <text x="969" y="477" fill="#8fb29a" text-anchor="middle" font-size="12" letter-spacing="1">SELECT / REDACT / EXPORT</text>
+  </g>
+</svg>

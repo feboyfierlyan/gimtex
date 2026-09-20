@@ -1,0 +1,26 @@
+$ gimtex src/ -i '*.rs' -n -o context.md
+[>>] Scanning target: /private/tmp/gimtex-live-6c5z3v5q/src
+[!] Potential secret redacted in: /private/tmp/gimtex-live-6c5z3v5q/src/scanner.rs
+[OK] Output written to: context.md
+[i] Payload Metrics: 2 files | 10702 tokens | 38240 chars
+$ head -n 19 context.md
+# Project structure
+
+```
+.
+├── main.rs
+└── scanner.rs
+```
+
+# File contents
+
+## File: main\.rs (2424 tokens)
+
+```
+   1 | mod scanner;
+   2 |
+   3 | use anyhow::{Context, Result};
+   4 | use clap::{CommandFactory, FromArgMatches, Parser, ValueEnum};
+   5 | use colored::Colorize;
+   6 | use serde::Deserialize;
+$

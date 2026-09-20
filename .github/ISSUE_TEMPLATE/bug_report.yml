@@ -1,0 +1,49 @@
+name: Bug report
+description: Report an extraction, selection, or output problem.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: Please use a small sanitized fixture. Do not include credentials or private source exports.
+  - type: input
+    id: version
+    attributes:
+      label: Gimtex version
+      placeholder: Output of gimtex --version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and terminal
+      placeholder: e.g. macOS, Linux with X11/Wayland, or Windows with PowerShell
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and relevant configuration
+      description: Include gimtex.toml and ignore rules if they affect selection.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Share a small file tree or fixture and the steps needed to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and diagnostics
+      description: Include stderr and the exit status when available. Sanitize any sensitive paths or values.
+    validations:
+      required: true

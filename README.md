@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="assets/readme/hero.svg" alt="Gimtex — your codebase, ready for the next conversation. A Rust CLI for selecting source files and exporting readable context." width="100%" />
+  <img src="assets/readme/hero.gif" alt="Recorded Gimtex usage: export Gimtex's own Rust source to context.md, inspect token counts, then preview the generated file tree and numbered source." width="100%" />
 </p>
+
+<p align="center"><sub>Gimtex exporting its own source. Real terminal recording · <a href="assets/readme/hero-poster.png">Static view</a> · <a href="docs/recording.md">Reproduce the GIF</a></sub></p>
 
 <p align="center">
   <a href="https://github.com/feboyfierlyan/gimtex/actions/workflows/ci.yml"><img src="https://github.com/feboyfierlyan/gimtex/actions/workflows/ci.yml/badge.svg?branch=master" alt="CI status on master" /></a>

@@ -3,3 +3,4 @@ examples/readme-demo/src/*.rs text eol=lf
 docs/media/* text eol=lf
 assets/readme/*.svg text eol=lf
 assets/readme/*.png binary
+assets/readme/*.gif binary

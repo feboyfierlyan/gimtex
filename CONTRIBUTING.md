@@ -75,8 +75,10 @@ the transcript and Markdown export into `docs/media/`; the command's absolute
 scan path is shortened for readability. Review SVG/PNG layout and keep the image,
 transcript, fixture, and documented metrics consistent.
 
-The banner and architecture diagram are editable SVG files in `assets/readme/`.
-They are conceptual illustrations; the terminal image is a recorded example.
+The opening banner is a real PTY recording of Gimtex processing its own `src/`;
+see [the GIF recording guide](docs/recording.md) to regenerate it. The architecture
+diagram and alternative static hero are editable SVG files in `assets/readme/`.
+Those SVGs are conceptual illustrations; the terminal images are recorded examples.
 Do not turn a fixture's token count into an unsupported performance claim.
 
 ## Open a pull request

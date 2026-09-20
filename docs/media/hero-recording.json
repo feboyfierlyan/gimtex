@@ -1,0 +1,14 @@
+{
+  "commands": [
+    "gimtex src/ -i '*.rs' -n -o context.md",
+    "head -n 19 context.md"
+  ],
+  "duration_seconds": 14.055,
+  "binary_version": "gimtex 2.6.0",
+  "inputs": {
+    "src/main.rs": "d93eba89de67e6951567f773c624a30fdc6c43faa080cf90dce1a5b2e6c457e1",
+    "src/scanner.rs": "006547234ca10dc630412cdd74c9d672790c717d6eaa70d0653774f888417faa"
+  },
+  "payload_sha256": "eefc192111ffe1c94409c42cd92978274564453a0cc3d61e09825a1926599cb7",
+  "notes": "Actual PTY output. Source copied unchanged to a temporary workspace. GIF opens with a 1.2-second still of the completed export, then replays the recording. Typing and reading pauses are intentional; this is not a benchmark."
+}
